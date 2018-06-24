@@ -247,6 +247,9 @@ enum {
 	SC_CARD_TYPE_NPA = 34000,
 	SC_CARD_TYPE_NPA_TEST,
 	SC_CARD_TYPE_NPA_ONLINE,
+
+	/* SID800 cards */
+	SC_CARD_TYPE_SID800 = 35000,
 };
 
 extern sc_card_driver_t *sc_get_default_driver(void);
