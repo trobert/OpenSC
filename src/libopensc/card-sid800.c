@@ -22,12 +22,12 @@ static struct sc_atr_table sid800_atrs[] = {
 	{
  	         "3b:0f:80:22:15:e1:5a:00:20:00:30:21:03:31:21:03:00",
 		 "ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:fe:ff:ff:ff:ff:ff:ff", 
-		 "sid800", SC_CARD_TYPE_GENERIC, 0, NULL
+		 "sid800", SC_CARD_TYPE_SID800, 0, NULL
 	},
 	{ 
 	         "3b:6f:00:ff:52:53:41:53:65:63:75:72:49:44:28:52:29:31:30",
 		 "ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff", 
-		 "sid800", SC_CARD_TYPE_GENERIC, 0, NULL
+		 "sid800", SC_CARD_TYPE_SID800, 0, NULL
 	},
 	{ NULL, NULL, NULL, 0, 0, NULL }
 };
