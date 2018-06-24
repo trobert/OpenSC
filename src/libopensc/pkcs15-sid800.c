@@ -20,9 +20,15 @@
 #include "internal.h"
 #include "pkcs15.h"
 
+static struct sc_aid pub_container = {
+	{0xA0,0x00,0x00,0x00,0x63,0x86,0x02,0x00,0x06}, 9};
+
 static int sc_pkcs15emu_sid800_init(sc_pkcs15_card_t *p15card)
 {
+	u8 buf[1024];
 	sc_card_t *card = p15card->card;
+	sc_path_t path = {
+	  {0, 0}, 0, 0, 0, SC_PATH_TYPE_FILE_ID, pub_container};
 	
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
 	if (p15card->tokeninfo->label != NULL)
@@ -31,7 +37,10 @@ static int sc_pkcs15emu_sid800_init(sc_pkcs15_card_t *p15card)
 	if (p15card->tokeninfo->manufacturer_id != NULL)
 		free(p15card->tokeninfo->manufacturer_id);
 	p15card->tokeninfo->manufacturer_id = strdup("RSA");
-	
+
+	sc_append_file_id(&path, 0x6331);
+	sc_select_file(card, &path, NULL);
+	sc_read_binary(card, 0, buf, 1024, 0);
   	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 }
 
