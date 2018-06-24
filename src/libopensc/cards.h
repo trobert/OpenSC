@@ -258,6 +258,9 @@ enum {
 	SC_CARD_TYPE_RUTOKEN_ECP_SC,
 	SC_CARD_TYPE_RUTOKEN_LITE,
 	SC_CARD_TYPE_RUTOKEN_LITE_SC,
+
+	/* SID800 cards */
+	SC_CARD_TYPE_SID800 = 37000,
 };
 
 extern sc_card_driver_t *sc_get_default_driver(void);
