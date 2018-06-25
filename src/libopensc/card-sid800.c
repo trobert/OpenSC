@@ -59,7 +59,7 @@ static int sid800_select_file(sc_card_t *card, const sc_path_t *in_path,
 	if (card == NULL || in_path == NULL)
 		SC_FUNC_RETURN(card->ctx, SC_LOG_DEBUG_VERBOSE, SC_ERROR_INVALID_ARGUMENTS);
        
-	if (in_path->type != SC_PATH_TYPE_FILE_ID || in_path->len != 2)
+	if (in_path->type != SC_PATH_TYPE_PATH && (in_path->type != SC_PATH_TYPE_FILE_ID || in_path->len != 2))
 		SC_FUNC_RETURN(card->ctx, SC_LOG_DEBUG_VERBOSE, SC_ERROR_INVALID_ARGUMENTS);
 
 	if (in_path->aid.len) {
@@ -76,6 +76,11 @@ static int sid800_select_file(sc_card_t *card, const sc_path_t *in_path,
 			LOG_FUNC_RETURN(card->ctx, r);
 	}
 
+	if (in_path->type == SC_PATH_TYPE_PATH) {
+		SID800_DATA(card)->object_id = 0;
+		LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
+	}
+		
 	objid = bebytes2ushort(in_path->value);
 	SID800_DATA(card)->object_id = objid;
 
@@ -88,8 +93,7 @@ static int sid800_select_file(sc_card_t *card, const sc_path_t *in_path,
 
 		*file_out = file;
 		LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
-	}
-	
+	}	
 		
 	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);	
 }
@@ -103,6 +107,9 @@ static int sid800_read_binary(struct sc_card *card, unsigned int idx, u8 *buf, s
 	
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
 
+	if (!priv->object_id)
+		SC_FUNC_RETURN(card->ctx, SC_LOG_DEBUG_VERBOSE, SC_ERROR_INVALID_ARGUMENTS);
+		
 	sc_format_apdu(card, &apdu, SC_APDU_CASE_4, 0x14,
 		       idx >> 8, idx & 0xFF);
 	apdu.cla = 0x80;
