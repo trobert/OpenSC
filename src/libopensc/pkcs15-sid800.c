@@ -24,23 +24,28 @@
 static struct sc_aid pub_container = {
 	{0xA0,0x00,0x00,0x00,0x63,0x86,0x02,0x00,0x06}, 9};
 
+static struct sc_aid pki_aid = {
+	{0xA0,0x00,0x00,0x00,0x63,0x86,0x01,0x00,0x00}, 9};
+
 static int sc_pkcs15emu_sid800_init(sc_pkcs15_card_t *p15card)
 {
 	u8 buf[4096];
 	u8* certfile = NULL;
 	size_t compressed_len, certfile_len;
 	int r, file_id;
-	
+
 	sc_card_t *card = p15card->card;
 	sc_path_t path = {
 	  {0, 0}, 0, 0, -1, SC_PATH_TYPE_FILE_ID, pub_container};
 
+	sc_pkcs15_object_t pkcs15_obj;
 	sc_pkcs15_cert_info_t cert_info;
-	sc_pkcs15_object_t cert_obj;
-	
+	sc_pkcs15_prkey_info_t prkey_info;
+	sc_pkcs15_pubkey_info_t pubkey_info;
+
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
 
-	p15card->opts.use_file_cache = 1;	
+	p15card->opts.use_file_cache = 1;
 
 	if (p15card->tokeninfo->label != NULL)
 		free(p15card->tokeninfo->label);
@@ -59,21 +64,53 @@ static int sc_pkcs15emu_sid800_init(sc_pkcs15_card_t *p15card)
 		r = sc_read_binary(card, 0, buf, 4096, 0);
 		if (r <= 0)
 			continue;
-		
+
 		compressed_len = r;
 		sc_decompress_alloc(&certfile, &certfile_len,
 				    buf, compressed_len, COMPRESSION_ZLIB);
 
+		memset(&pkcs15_obj,  0, sizeof(pkcs15_obj));
 		memset(&cert_info, 0, sizeof(cert_info));
-		memset(&cert_obj,  0, sizeof(cert_obj));
 
 		cert_info.id.value[0] = file_id - 0x6331;
 		cert_info.id.len = 1;
 		cert_info.path = path;
 
 		sc_pkcs15_cache_file(p15card, &path, certfile, certfile_len);
-		sc_pkcs15emu_add_x509_cert(p15card, &cert_obj, &cert_info);
+		sc_pkcs15emu_add_x509_cert(p15card, &pkcs15_obj, &cert_info);
 	}
+
+	for (file_id = 0x7031; file_id<=0x7037; file_id++) {
+		path.len = 0;
+		sc_append_file_id(&path, file_id);
+		sc_select_file(card, &path, NULL);
+		r = sc_read_binary(card, 0, buf, 4096, 0);
+		if (r <= 0)
+			continue;
+
+		memset(&pkcs15_obj,  0, sizeof(pkcs15_obj));
+		memset(&pubkey_info, 0, sizeof(pubkey_info));
+
+		pubkey_info.id.value[0] = file_id - 0x7031;
+		pubkey_info.id.len = 1;
+		pubkey_info.path = path;
+		sc_pkcs15emu_add_rsa_pubkey(p15card, &pkcs15_obj, &pubkey_info);
+
+		memset(&pkcs15_obj,  0, sizeof(pkcs15_obj));
+		memset(&pubkey_info, 0, sizeof(pubkey_info));
+
+		prkey_info.id.value[0] = file_id - 0x7031;
+		prkey_info.id.len = 1;
+		prkey_info.path.type=SC_PATH_TYPE_PATH;
+		prkey_info.path.aid = pki_aid;
+		prkey_info.path.aid.value[7] = file_id - 0x7030;
+		prkey_info.path.len = 0;
+		prkey_info.usage = SC_PKCS15_PRKEY_USAGE_SIGN;
+		prkey_info.native = 1;
+		prkey_info.modulus_length = 2048; // arbitrary value...
+		sc_pkcs15emu_add_rsa_prkey(p15card, &pkcs15_obj, &prkey_info);
+	}
+
   	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 }
 
