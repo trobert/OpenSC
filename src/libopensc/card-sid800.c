@@ -40,7 +40,7 @@ static struct sc_atr_table sid800_atrs[] = {
 	{ NULL, NULL, NULL, 0, 0, NULL }
 };
 
-static struct sc_card_operations sid800_ops;
+static struct sc_card_operations sid800_ops, *iso_ops;
 
 static struct sc_card_driver sid800_drv = {
 	"RSA SecurID SID800 token", "sid800", &sid800_ops, NULL, 0, NULL
@@ -131,6 +131,17 @@ static int sid800_read_binary(struct sc_card *card, unsigned int idx, u8 *buf, s
 	LOG_FUNC_RETURN(card->ctx, apdu.resplen);		
 }
 
+static int sid800_pin_cmd(sc_card_t *card, struct sc_pin_cmd_data *data, int *tries_left)
+{
+	int r;
+
+	card->cla = 0x80;
+	r = iso_ops->pin_cmd(card, data, tries_left);
+	card->cla = 0x00;
+
+	return r;
+}
+
 static int sid800_init(sc_card_t *card)
 {
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
@@ -172,11 +183,13 @@ static int sid800_match_card(sc_card_t *card)
 struct sc_card_driver * sc_get_sid800_driver(void)
 {
   	struct sc_card_driver *iso_drv = sc_get_iso7816_driver();
+	iso_ops = iso_drv->ops;
 	sid800_ops = *iso_drv->ops;
 	sid800_ops.init = sid800_init;
 	sid800_ops.finish = sid800_finish;
 	sid800_ops.match_card = sid800_match_card;
 	sid800_ops.select_file = sid800_select_file;
 	sid800_ops.read_binary = sid800_read_binary;
+	sid800_ops.pin_cmd = sid800_pin_cmd;
 	return &sid800_drv;
 }
