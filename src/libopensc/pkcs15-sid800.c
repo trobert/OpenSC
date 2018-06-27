@@ -42,6 +42,7 @@ static int sc_pkcs15emu_sid800_init(sc_pkcs15_card_t *p15card)
 	sc_pkcs15_cert_info_t cert_info;
 	sc_pkcs15_prkey_info_t prkey_info;
 	sc_pkcs15_pubkey_info_t pubkey_info;
+	sc_pkcs15_auth_info_t pin_info;
 
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
 
@@ -108,9 +109,20 @@ static int sc_pkcs15emu_sid800_init(sc_pkcs15_card_t *p15card)
 		prkey_info.usage = SC_PKCS15_PRKEY_USAGE_SIGN;
 		prkey_info.native = 1;
 		prkey_info.modulus_length = 2048; // arbitrary value...
+		pkcs15_obj.auth_id.len = 1;
 		sc_pkcs15emu_add_rsa_prkey(p15card, &pkcs15_obj, &prkey_info);
 	}
 
+	memset(&pkcs15_obj,  0, sizeof(pkcs15_obj));
+	memset(&pin_info, 0, sizeof(pin_info));
+	pin_info.auth_id.len = 1;
+	pin_info.attrs.pin.type = SC_PKCS15_PIN_TYPE_ASCII_NUMERIC;
+	pin_info.attrs.pin.min_length = 4;
+	pin_info.attrs.pin.max_length = 8;
+	pin_info.tries_left = -1;
+	strcpy(pkcs15_obj.label, "PIN");
+
+	sc_pkcs15emu_add_pin_obj(p15card, &pkcs15_obj, &pin_info);
   	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 }
 
