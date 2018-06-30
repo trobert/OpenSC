@@ -142,10 +142,81 @@ static int sid800_pin_cmd(sc_card_t *card, struct sc_pin_cmd_data *data, int *tr
 	return r;
 }
 
+static int sid800_set_security_env(struct sc_card *card,
+		const struct sc_security_env *env, int se_num)
+{
+	LOG_FUNC_CALLED(card->ctx);
+	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
+}
+
+static int
+sid800_compute_signature(struct sc_card *card,
+		const u8 * data, size_t datalen,
+		u8 * out, size_t outlen)
+{
+	int r;
+	struct sc_apdu apdu;
+
+	if (card == NULL || data == NULL || out == NULL) {
+		return SC_ERROR_INVALID_ARGUMENTS;
+	}
+	LOG_FUNC_CALLED(card->ctx);
+	sc_log(card->ctx,
+	       "SID800 compute signature: in-len %"SC_FORMAT_LEN_SIZE_T"u, out-len %"SC_FORMAT_LEN_SIZE_T"u",
+	       datalen, outlen);
+
+	if (datalen > 0x100)
+		LOG_FUNC_RETURN(card->ctx, SC_ERROR_INVALID_ARGUMENTS);
+
+	if (datalen > 0x80) {
+		sc_format_apdu(card, &apdu, SC_APDU_CASE_3, 0x42, 0x00, 0x01);
+		apdu.cla = 0x80;
+		apdu.lc = 0x80;
+		apdu.data = data;
+		apdu.datalen = 0x80;
+
+		r = sc_transmit_apdu(card, &apdu);
+		LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
+		r = sc_check_sw(card, apdu.sw1, apdu.sw2);
+		LOG_TEST_RET(card->ctx, r, "Card returned error");
+
+		datalen -= 0x80;
+		data += 0x80;
+	}
+
+	sc_format_apdu(card, &apdu, SC_APDU_CASE_4, 0x42, 0x00, 0x00);
+	apdu.cla = 0x80;
+	apdu.resp = out;
+	apdu.resplen = outlen;
+	apdu.le = outlen;
+
+	apdu.data = data;
+	apdu.lc = datalen;
+	apdu.datalen = datalen;
+
+	//fixup_transceive_length
+	if (apdu.le > sc_get_max_recv_size(card)) {
+		/* The lower layers will automatically do a GET RESPONSE, if possible.
+		 * All other workarounds must be carried out by the upper layers. */
+		apdu.le = sc_get_max_recv_size(card);
+	}
+
+	r = sc_transmit_apdu(card, &apdu);
+	LOG_TEST_RET(card->ctx, r, "APDU transmit failed");
+	if (apdu.sw1 == 0x90 && apdu.sw2 == 0x00)
+		LOG_FUNC_RETURN(card->ctx, apdu.resplen);
+
+	r = sc_check_sw(card, apdu.sw1, apdu.sw2);
+	LOG_TEST_RET(card->ctx, r, "Card returned error");
+
+	LOG_FUNC_RETURN(card->ctx, r);
+}
+
 static int sid800_init(sc_card_t *card)
 {
+	unsigned long flags;
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
-	
+
 	if (card->drv_data) {
 		LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 	}
@@ -154,6 +225,11 @@ static int sid800_init(sc_card_t *card)
 
 	if (!card->drv_data)
 		LOG_FUNC_RETURN(card->ctx, SC_ERROR_OUT_OF_MEMORY);
+
+	// Don't know what the card actually supports, so register just what's known to work
+	flags = SC_ALGORITHM_RSA_RAW;
+	_sc_card_add_rsa_alg(card, 1024, flags, 0);
+	_sc_card_add_rsa_alg(card, 2048, flags, 0);
 
 	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 }
@@ -191,5 +267,7 @@ struct sc_card_driver * sc_get_sid800_driver(void)
 	sid800_ops.select_file = sid800_select_file;
 	sid800_ops.read_binary = sid800_read_binary;
 	sid800_ops.pin_cmd = sid800_pin_cmd;
+	sid800_ops.set_security_env = sid800_set_security_env;
+	sid800_ops.compute_signature = sid800_compute_signature;
 	return &sid800_drv;
 }
