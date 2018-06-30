@@ -29,12 +29,12 @@ typedef struct sid800_private {
 static struct sc_atr_table sid800_atrs[] = {
 	{
  	         "3b:0f:80:22:15:e1:5a:00:20:00:30:21:03:31:21:03:00",
-		 "ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:fe:ff:ff:ff:ff:ff:ff", 
+		 "ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:fe:ff:ff:ff:ff:ff:ff",
 		 "sid800", SC_CARD_TYPE_SID800, 0, NULL
 	},
-	{ 
+	{
 	         "3b:6f:00:ff:52:53:41:53:65:63:75:72:49:44:28:52:29:31:30",
-		 "ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff", 
+		 "ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff",
 		 "sid800", SC_CARD_TYPE_SID800, 0, NULL
 	},
 	{ NULL, NULL, NULL, 0, 0, NULL }
@@ -53,12 +53,12 @@ static int sid800_select_file(sc_card_t *card, const sc_path_t *in_path,
 	struct sc_file *file;
 	unsigned short objid;
 	int r;
-	
+
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
 
 	if (card == NULL || in_path == NULL)
 		SC_FUNC_RETURN(card->ctx, SC_LOG_DEBUG_VERBOSE, SC_ERROR_INVALID_ARGUMENTS);
-       
+
 	if (in_path->type != SC_PATH_TYPE_PATH && (in_path->type != SC_PATH_TYPE_FILE_ID || in_path->len != 2))
 		SC_FUNC_RETURN(card->ctx, SC_LOG_DEBUG_VERBOSE, SC_ERROR_INVALID_ARGUMENTS);
 
@@ -80,7 +80,7 @@ static int sid800_select_file(sc_card_t *card, const sc_path_t *in_path,
 		SID800_DATA(card)->object_id = 0;
 		LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 	}
-		
+
 	objid = bebytes2ushort(in_path->value);
 	SID800_DATA(card)->object_id = objid;
 
@@ -93,9 +93,9 @@ static int sid800_select_file(sc_card_t *card, const sc_path_t *in_path,
 
 		*file_out = file;
 		LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
-	}	
-		
-	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);	
+	}
+
+	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
 }
 
 static int sid800_read_binary(struct sc_card *card, unsigned int idx, u8 *buf, size_t count, unsigned long flags)
@@ -104,12 +104,12 @@ static int sid800_read_binary(struct sc_card *card, unsigned int idx, u8 *buf, s
 	sid800_private_t *priv = SID800_DATA(card);
 	u8 fileid[2];
 	int r;
-	
+
 	SC_FUNC_CALLED(card->ctx, SC_LOG_DEBUG_VERBOSE);
 
 	if (!priv->object_id)
 		SC_FUNC_RETURN(card->ctx, SC_LOG_DEBUG_VERBOSE, SC_ERROR_INVALID_ARGUMENTS);
-		
+
 	sc_format_apdu(card, &apdu, SC_APDU_CASE_4, 0x14,
 		       idx >> 8, idx & 0xFF);
 	apdu.cla = 0x80;
@@ -128,7 +128,7 @@ static int sid800_read_binary(struct sc_card *card, unsigned int idx, u8 *buf, s
 		LOG_FUNC_RETURN(card->ctx, apdu.resplen);
 	LOG_TEST_RET(card->ctx, r, "Check SW error");
 
-	LOG_FUNC_RETURN(card->ctx, apdu.resplen);		
+	LOG_FUNC_RETURN(card->ctx, apdu.resplen);
 }
 
 static int sid800_pin_cmd(sc_card_t *card, struct sc_pin_cmd_data *data, int *tries_left)
@@ -242,8 +242,8 @@ static int sid800_finish(sc_card_t *card)
 		free(card->drv_data);
 
 	LOG_FUNC_RETURN(card->ctx, SC_SUCCESS);
-}	
-	
+}
+
 static int sid800_match_card(sc_card_t *card)
 {
 	int i;
@@ -251,7 +251,7 @@ static int sid800_match_card(sc_card_t *card)
 
 	i = _sc_match_atr(card, sid800_atrs, &card->type);
 	if (i < 0)
-		return 0;		
+		return 0;
 
 	return 1;
 }
