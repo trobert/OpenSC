@@ -109,7 +109,7 @@ static int sc_pkcs15emu_sid800_init(sc_pkcs15_card_t *p15card)
 		prkey_info.usage = SC_PKCS15_PRKEY_USAGE_SIGN | SC_PKCS15_PRKEY_USAGE_NONREPUDIATION;
 		prkey_info.native = 1;
 		prkey_info.modulus_length = 2048; // arbitrary value...
-		pkcs15_obj.auth_id.len = 1;
+		//pkcs15_obj.auth_id.len = 1;
 		sc_pkcs15emu_add_rsa_prkey(p15card, &pkcs15_obj, &prkey_info);
 	}
 
