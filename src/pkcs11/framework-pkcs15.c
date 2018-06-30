@@ -4035,7 +4035,7 @@ pkcs15_prkey_can_do(struct sc_pkcs11_session *session, void *obj,
 			if (pkinfo->algo_refs[ii] == (token_algos + jj)->reference)
 				break;
 		if ((jj == SC_MAX_SUPPORTED_ALGORITHMS) || !(token_algos + jj)->reference)
-			return CKR_GENERAL_ERROR;
+		  return 0;//CKR_GENERAL_ERROR;
 
 		if ((token_algos + jj)->mechanism != mech_type)
 			continue;
