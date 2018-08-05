@@ -97,8 +97,8 @@ static int sc_pkcs15emu_sid800_init(sc_pkcs15_card_t *p15card)
 		pubkey_info.path = path;
 		sc_pkcs15emu_add_rsa_pubkey(p15card, &pkcs15_obj, &pubkey_info);
 
-		memset(&pkcs15_obj,  0, sizeof(pkcs15_obj));
-		memset(&pubkey_info, 0, sizeof(pubkey_info));
+		memset(&pkcs15_obj, 0, sizeof(pkcs15_obj));
+		memset(&prkey_info, 0, sizeof(prkey_info));
 
 		prkey_info.id.value[0] = file_id - 0x7031;
 		prkey_info.id.len = 1;
